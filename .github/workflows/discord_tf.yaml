@@ -6,7 +6,8 @@ on:
     - master
     paths:
     - "discord/**"
-
+  workflow_dispatch:
+    
 jobs:
   apply:
     name: Apply
@@ -19,18 +20,13 @@ jobs:
       uses: hashicorp/setup-terraform@v3
       with:
         terraform_version: 1.9.5
-
-    - name: env
-      working-directory: discord
-      run: |
-        echo "${{ secrets.DISCORD_TERRAFORM_VARS }}" > terraform.tfvars
     
     - name: Apply
       working-directory: discord
       run: |
         terraform init
         terraform get
-        terraform apply -auto-approve
+        terraform apply -auto-approve -var "discord_token=${{secrets.DISCORD_TOKEN}}" -var "server_id=${{secrets.DISCORD_SERVER_ID}}"
       shell: bash
     
     - name: push state diff
