@@ -21,6 +21,7 @@ jobs:
         terraform_version: 1.9.5
 
     - name: env
+      working-directory: discord
       run: |
         echo "${{ secrets.DISCORD_TERRAFORM_VARS }}" > terraform.tfvars
     
