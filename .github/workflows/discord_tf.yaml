@@ -1,0 +1,45 @@
+name: discord tf apply
+
+on:
+  push:
+    branches:
+      - master
+  
+jobs:
+  apply:
+    name: Apply
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - name: Setup terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.9.5
+
+    - name: env
+      run: |
+        echo "${{ secrets.DISCORD_TERRAFORM_VARS }}" > terraform.tfvars
+    
+    - name: Apply
+      run: |
+        DIFF=$(git diff --name-only HEAD^ modules discord)
+        if [[ ${DIFF} = *resources* || ${DIFF} = *modules* ]]; then
+          cd discord
+          terraform init
+          terraform get
+          terraform apply -auto-approve
+        fi
+      shell: bash
+    
+    - name: push state diff
+      run: |
+        git remote set-url origin https://github-actions:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}
+        git config --global user.name "${GITHUB_ACTOR}"
+        git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+        if (git diff --shortstat | grep '[0-9]'); then \
+          git add .; \
+          git commit -m "update_state"; \
+          git push origin HEAD:${GITHUB_REF}; \
+        fi
